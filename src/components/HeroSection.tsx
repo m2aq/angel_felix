@@ -33,7 +33,7 @@ const HeroSection = ({ onBookNow }: HeroSectionProps) => {
   return (
     <section ref={ref} className="relative h-[200vh] bg-black">
       
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+      <div className="sticky top-0 h-[100dvh] w-full overflow-hidden flex items-center justify-center">
         
         {/* GLOBAL BACKGROUND */}
         <motion.div

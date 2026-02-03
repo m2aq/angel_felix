@@ -3,7 +3,6 @@ import { useRef } from "react";
 import cimarronImg from "@/assets/hero-cimarron.jpg";
 import colaBlancaImg from "@/assets/colaBlanca.jpg";
 import guajoloteImg from "@/assets/guajolote.jpg";
-import orixImg from "@/assets/orix.jpg";
 
 const hunts = [
   {
@@ -23,12 +22,6 @@ const hunts = [
     subtitle: "The Legendary Bird",
     description: "The Gould's Turkey is native to the Sierra of Sonora. A hunt that combines Mexican tradition with calling and stalking techniques in spectacular terrain.",
     image: guajoloteImg,
-  },
-  {
-    title: "Oryx",
-    subtitle: "Exotic Hunt",
-    description: "Experience the thrill of hunting this majestic African species acclimatized in Sonora's ranches. A unique challenge for the experienced hunter.",
-    image: orixImg,
   },
 ];
 

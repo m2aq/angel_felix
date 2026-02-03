@@ -3,6 +3,7 @@ import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import ScrollyTellingSection from "@/components/ScrollyTellingSection";
 import HuntsSection from "@/components/HuntsSection";
+import GalleryPreview from "@/components/GalleryPreview";
 import AboutSection from "@/components/AboutSection";
 import ContactSection from "@/components/ContactSection";
 import BookingModal from "@/components/BookingModal";
@@ -22,6 +23,7 @@ const Index = () => {
       <HeroSection onBookNow={() => openBooking("General Deposit")} />
       <ScrollyTellingSection />
       <HuntsSection onBookNow={openBooking} />
+      <GalleryPreview />
       <AboutSection />
       <ContactSection />
       

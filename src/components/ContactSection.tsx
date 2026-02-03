@@ -78,12 +78,20 @@ const ContactSection = () => {
 
         {/* Footer */}
         <motion.div
-          className="mt-24 border-t border-border pt-8 text-center"
+          className="mt-24 border-t border-border pt-8 text-center flex flex-col gap-4 items-center"
           style={{ opacity: contentOpacity }}
         >
           <p className="font-body text-xs uppercase tracking-widest text-muted-foreground">
-            © 2024 Angel Felix Outfitter. All rights reserved.
+            © 2025 Angel Felix Outfitter. All rights reserved.
           </p>
+          <a 
+            href="https://m2aq.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-[10px] uppercase tracking-widest text-white/20 hover:text-white/60 transition-colors"
+          >
+            Developed by M2AQ
+          </a>
         </motion.div>
       </div>
     </section>

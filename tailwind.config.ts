@@ -88,6 +88,10 @@ export default {
           "0%": { width: "0" },
           "100%": { width: "6rem" },
         },
+        marquee: {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(calc(-100% - 1rem))" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -96,6 +100,7 @@ export default {
         "fade-in": "fade-in 1s ease-out forwards",
         "scale-in": "scale-in 0.6s ease-out forwards",
         "line-expand": "line-expand 1s ease-out forwards",
+        marquee: "marquee 40s linear infinite",
       },
     },
   },
