@@ -3,13 +3,15 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import BookingModal from "@/components/BookingModal";
 
 const Gallery = () => {
   const [shuffledImages, setShuffledImages] = useState<string[]>([]);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   useEffect(() => {
-    // Generar array y barajarlo
-    const images = Array.from({ length: 29 }, (_, i) => `/angel_felix/album/photo-${i + 1}.jpg`);
+    // Generar array y barajarlo (ahora 28 fotos)
+    const images = Array.from({ length: 28 }, (_, i) => `/angel_felix/album/photo-${i + 1}.jpg`);
     const shuffled = [...images].sort(() => Math.random() - 0.5);
     setShuffledImages(shuffled);
     
@@ -19,7 +21,7 @@ const Gallery = () => {
 
   return (
     <main className="min-h-screen bg-black">
-      <Navigation onBookNow={() => {}} />
+      <Navigation onBookNow={() => setIsBookingOpen(true)} />
       
       <div className="pt-32 pb-20 px-4 container mx-auto">
         <Link 
@@ -38,8 +40,8 @@ const Gallery = () => {
             <div className="elegant-line mx-auto" />
         </header>
 
-        {/* Masonry-like Grid */}
-        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+        {/* Uniform Grid instead of Masonry */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {shuffledImages.map((src, index) => (
                 <motion.div
                     key={index}
@@ -47,12 +49,12 @@ const Gallery = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.05 }}
-                    className="relative overflow-hidden rounded-lg group"
+                    className="relative overflow-hidden rounded-lg group aspect-[4/5]"
                 >
                     <img 
                         src={src} 
                         alt={`Experience ${index}`} 
-                        className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         loading="lazy"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
@@ -63,9 +65,23 @@ const Gallery = () => {
         </div>
       </div>
       
-      <footer className="py-20 border-t border-white/10 text-center">
+      <footer className="py-20 border-t border-white/10 text-center flex flex-col gap-4 items-center">
          <p className="text-gray-500 text-xs uppercase tracking-widest">© 2025 Angel Felix Hunting</p>
+         <a 
+            href="https://m2aq.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-[10px] uppercase tracking-widest text-white/20 hover:text-white/60 transition-colors"
+          >
+            Developed by M2AQ
+          </a>
       </footer>
+
+      <BookingModal 
+        isOpen={isBookingOpen} 
+        onClose={() => setIsBookingOpen(false)} 
+        selectedHunt="General Deposit"
+      />
     </main>
   );
 };

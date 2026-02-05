@@ -74,7 +74,7 @@ const HuntItem = ({ hunt, index, onBookNow }: { hunt: typeof hunts[0]; index: nu
 
       {/* Content Side */}
       <motion.div
-        className={`w-full lg:w-1/2 ${!isEven ? "lg:text-right" : "lg:text-left"}`}
+        className="w-full lg:w-1/2 text-center"
         style={{ 
           x: isEven ? xRight : xLeft, 
           opacity 
@@ -88,7 +88,7 @@ const HuntItem = ({ hunt, index, onBookNow }: { hunt: typeof hunts[0]; index: nu
           {hunt.title}
         </h3>
 
-        <div className={`mb-6 h-px w-24 bg-primary ${!isEven ? "lg:ml-auto" : ""} mx-auto lg:mx-0`} />
+        <div className="mb-6 h-px w-24 bg-primary mx-auto" />
 
         <p className="mb-8 font-body text-base leading-relaxed text-muted-foreground md:text-lg">
           {hunt.description}

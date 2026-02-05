@@ -65,15 +65,16 @@ const BookingModal = ({ isOpen, onClose, selectedHunt = "General Deposit" }: Boo
               className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm"
             />
 
-            {/* Modal */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed left-1/2 top-1/2 z-[70] max-h-[85vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/10"
-            >
-              {/* Header */}
-              <div className="mb-6 flex items-center justify-between">
+            {/* Modal Wrapper for Centering */}
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
+                <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="pointer-events-auto relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-xl bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/10"
+                >
+                {/* Header */}
+                <div className="mb-6 flex items-center justify-between">
                 <h3 className="font-display text-2xl text-white">
                   {step === 1 && "Start Your Adventure"}
                   {step === 2 && "Secure Deposit"}
@@ -218,11 +219,12 @@ const BookingModal = ({ isOpen, onClose, selectedHunt = "General Deposit" }: Boo
               )}
 
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </PayPalScriptProvider>
-  );
+          </div>
+        </>
+      )}
+    </AnimatePresence>
+  </PayPalScriptProvider>
+);
 };
 
 export default BookingModal;

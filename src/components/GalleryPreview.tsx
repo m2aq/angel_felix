@@ -2,8 +2,8 @@ import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 
-// Generamos el array de imágenes (1 al 29)
-const images = Array.from({ length: 29 }, (_, i) => `/angel_felix/album/photo-${i + 1}.jpg`);
+// Generamos el array de imágenes (1 al 28)
+const images = Array.from({ length: 28 }, (_, i) => `/angel_felix/album/photo-${i + 1}.jpg`);
 
 const GalleryPreview = () => {
   const ref = useRef<HTMLDivElement>(null);
