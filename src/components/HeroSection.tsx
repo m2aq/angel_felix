@@ -97,13 +97,43 @@ const HeroSection = ({ onBookNow }: HeroSectionProps) => {
 
         {/* SCROLL INDICATOR */}
         <motion.div
-           className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30"
-           style={{ opacity: useTransform(scrollYProgress, [0, 0.1], [1, 0]) }}
+          className="absolute bottom-8 left-1/2 z-30 -translate-x-1/2"
+          style={{ opacity: useTransform(scrollYProgress, [0, 0.1], [1, 0]) }}
         >
-           <div className="flex flex-col items-center gap-2">
-             <span className="text-xs uppercase tracking-widest text-white/70">Scroll</span>
-             <div className="h-8 w-px bg-white/50" />
-           </div>
+          <div className="flex flex-col items-center gap-2">
+            <motion.span
+              className="text-xs uppercase tracking-widest text-white/80"
+              animate={{ opacity: [0.45, 1, 0.45] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            >
+              Scroll Down
+            </motion.span>
+
+            <div className="relative flex h-12 w-7 items-start justify-center rounded-full border border-white/55 bg-black/20 p-1">
+              <motion.div
+                className="h-2 w-2 rounded-full bg-white/90"
+                animate={{ y: [0, 20, 0] }}
+                transition={{ duration: 1.25, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </div>
+
+            <motion.div
+              className="text-white/70"
+              animate={{ y: [0, 4, 0], opacity: [0.35, 1, 0.35] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <svg
+                width="14"
+                height="10"
+                viewBox="0 0 14 10"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path d="M1 1L7 8L13 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </motion.div>
+          </div>
         </motion.div>
 
       </div>

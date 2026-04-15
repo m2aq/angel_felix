@@ -2,7 +2,8 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import colaBlancaImg from "@/assets/colaBlanca.jpg";
+
+const SCROLLY_MULE_DEER_IMAGE = "/custom/scrolly-mule-deer.jpg";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -92,8 +93,8 @@ const ScrollyTellingSection = () => {
         {/* IMAGEN DE FONDO */}
         <img
           ref={imageRef}
-          src={colaBlancaImg}
-          alt="Majestic Deer"
+          src={SCROLLY_MULE_DEER_IMAGE}
+          alt="Mule Deer"
           className="absolute h-full w-full object-cover opacity-80"
           style={{ willChange: "transform" }}
         />

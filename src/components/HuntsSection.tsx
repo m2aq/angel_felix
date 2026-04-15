@@ -1,27 +1,28 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import cimarronImg from "@/assets/hero-cimarron.jpg";
-import colaBlancaImg from "@/assets/colaBlanca.jpg";
-import guajoloteImg from "@/assets/guajolote.jpg";
+
+const BIGHORN_IMAGE = "/custom/specialties-bighorn.jpg";
+const MULE_DEER_IMAGE = "/custom/specialties-mule-deer.jpg";
+const COUES_DEER_IMAGE = "/custom/specialties-coues-deer.jpg";
 
 const hunts = [
   {
     title: "Desert Bighorn Sheep",
     subtitle: "The Ultimate Trophy",
     description: "One of the most challenging and prestigious hunts in North America. The Sonora Bighorn is world-renowned for its horn size and the rugged terrain it inhabits.",
-    image: cimarronImg,
+    image: BIGHORN_IMAGE,
   },
   {
-    title: "Whitetail Deer",
+    title: "Mule Deer",
     subtitle: "Tradition & Elegance",
-    description: "Hunt the iconic Whitetail in the forests and brush of Sonora. We offer expeditions during the rutting season when bucks are most active.",
-    image: colaBlancaImg,
+    description: "Hunt the iconic Mule Deer in the forests and brush of Sonora. We offer expeditions during the rutting season when bucks are most active.",
+    image: MULE_DEER_IMAGE,
   },
   {
-    title: "Wild Turkey",
-    subtitle: "The Legendary Bird",
-    description: "The Gould's Turkey is native to the Sierra of Sonora. A hunt that combines Mexican tradition with calling and stalking techniques in spectacular terrain.",
-    image: guajoloteImg,
+    title: "Coues Deer",
+    subtitle: "Stealth & Precision",
+    description: "The elusive Coues Deer is one of Sonora's most prized and challenging hunts. It demands patience, glassing skill, and precision in rugged terrain.",
+    image: COUES_DEER_IMAGE,
   },
 ];
 
