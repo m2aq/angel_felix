@@ -84,10 +84,28 @@ const ContactSection = () => {
 
         {/* Footer */}
         <motion.div
-          className="mt-24 border-t border-border pt-8 text-center flex flex-col gap-4 items-center"
+          className="mt-24 border-t border-border pt-8 pb-28 md:pb-10 text-center flex flex-col gap-4 items-center"
           style={{ opacity: contentOpacity }}
         >
-          <p className="font-body text-xs uppercase tracking-widest text-muted-foreground">
+          <div className="mx-auto mt-4 flex max-w-2xl flex-col items-center gap-5 rounded-[2rem] border border-primary/20 bg-black/10 px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.22)] backdrop-blur-sm">
+            <span className="font-body text-[10px] uppercase tracking-[0.35em] text-primary/80">
+              Safari Club International
+            </span>
+            <img
+              src={`${import.meta.env.BASE_URL}sci_vector.svg`}
+              alt="Safari Club International"
+              className="h-auto w-full max-w-[16rem] opacity-90 md:max-w-[20rem]"
+            />
+            <p className="max-w-xl font-body text-sm leading-relaxed text-muted-foreground">
+              Proudly affiliated with Safari Club International, reflecting a commitment to responsible hunting,
+              conservation, and the highest standards of the sporting community.
+            </p>
+          </div>
+
+          <p
+            onClick={() => window.dispatchEvent(new Event("af-admin-secret-click"))}
+            className="cursor-default font-body text-xs uppercase tracking-widest text-muted-foreground"
+          >
             &copy; 2025 Angel Felix Outfitter LLC. All rights reserved.
           </p>
           <a 
@@ -96,7 +114,7 @@ const ContactSection = () => {
             rel="noopener noreferrer"
             className="text-[10px] uppercase tracking-widest text-white/20 hover:text-white/60 transition-colors"
           >
-            Developed by M2AQ
+            Developed by m2aq
           </a>
         </motion.div>
       </div>
