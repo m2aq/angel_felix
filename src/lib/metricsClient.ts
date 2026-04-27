@@ -44,6 +44,11 @@ export type BookingLeadRow = {
   email: string;
   phone: string;
   hunt: string;
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
   source_path: string | null;
   status: string;
   payment_provider: string | null;
@@ -110,13 +115,31 @@ async function resolveGeoSnapshot(): Promise<GeoSnapshot> {
     if (tz.includes("toronto") || tz.includes("vancouver")) inferredCountry = "Canada";
   }
 
-  return {
+  const fallbackGeo = {
     country: inferredCountry,
     region: null,
     city: null,
     latitude: null,
     longitude: null,
   };
+
+  try {
+    const response = await withTimeout(
+      fetch("https://ipapi.co/json/", { headers: { accept: "application/json" } }),
+      1600
+    );
+    if (!response.ok) return fallbackGeo;
+    const data = await response.json();
+    return {
+      country: data.country_name || data.country || fallbackGeo.country,
+      region: data.region || null,
+      city: data.city || null,
+      latitude: typeof data.latitude === "number" ? data.latitude : null,
+      longitude: typeof data.longitude === "number" ? data.longitude : null,
+    };
+  } catch {
+    return fallbackGeo;
+  }
 }
 
 export async function trackPageView(pathOverride?: string) {
@@ -135,7 +158,7 @@ export async function trackPageView(pathOverride?: string) {
     };
 
     // Preferred path: server-side Edge Function enriches country/city from request IP.
-    const fxResp = await withTimeout(
+    const requestMetricsTrack = () =>
       fetch(`${SUPABASE_URL}/functions/v1/metrics-track`, {
         method: "POST",
         headers: {
@@ -144,36 +167,21 @@ export async function trackPageView(pathOverride?: string) {
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify(payload),
-      }),
-      6000
-    );
+      });
 
+    let fxResp = await withTimeout(requestMetricsTrack(), 12000);
+    if (!fxResp.ok) {
+      // Single retry for transient cold starts/network blips.
+      fxResp = await withTimeout(requestMetricsTrack(), 12000);
+    }
     if (!fxResp.ok) throw new Error(`metrics-track failed (${fxResp.status})`);
   } catch {
-    // Fallback path: still record raw visit without geo if function isn't deployed yet.
-    try {
-      const geo = await resolveGeoSnapshot();
-      await supabase.from("analytics_visits").insert({
-        path: pathOverride || currentPath(),
-        page_title: document.title || null,
-        country: geo.country,
-        region: geo.region,
-        city: geo.city,
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
-        language: navigator.language || null,
-        user_agent: navigator.userAgent || null,
-        device_type: getDeviceType(),
-        referrer: document.referrer || null,
-      });
-    } catch {
-      // Never block UX if metrics fail.
-    }
+    // Keep data quality strict: if server-side geo capture fails, skip visit insert.
+    // This avoids storing inferred city/region rows that look "real" but have null coords.
   }
 }
 
-export async function fetchRecentVisits(limit = 100): Promise<VisitRow[]> {
+export async function fetchRecentVisits(limit = 500): Promise<VisitRow[]> {
   const { data, error } = await supabase
     .from("analytics_visits")
     .select(
@@ -204,27 +212,65 @@ export async function isAdminSessionActive() {
 }
 
 export async function saveBookingLead(input: BookingLeadInput): Promise<number | null> {
-  const { error } = await supabase
-    .from("booking_leads")
-    .insert({
-      full_name: input.fullName,
-      email: input.email,
-      phone: input.phone,
-      hunt: input.hunt,
-      source_path: input.sourcePath,
-      status: "lead_captured",
-    });
+  try {
+    const fxResp = await withTimeout(
+      fetch(`${SUPABASE_URL}/functions/v1/lead-capture`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          full_name: input.fullName,
+          email: input.email,
+          phone: input.phone,
+          hunt: input.hunt,
+          source_path: input.sourcePath,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+          language: navigator.language || null,
+          user_agent: navigator.userAgent || null,
+          referrer: document.referrer || null,
+        }),
+      }),
+      7000
+    );
 
-  if (error) throw error;
-  // RLS keeps SELECT admin-only, so public inserts should not request returned rows.
-  return null;
+    if (!fxResp.ok) {
+      const text = await fxResp.text().catch(() => "");
+      throw new Error(`lead-capture failed (${fxResp.status}) ${text}`);
+    }
+    return null;
+  } catch {
+    // Fallback path: still store lead if Edge Function is not deployed/reachable.
+    const geo = await resolveGeoSnapshot();
+    const { error } = await supabase
+      .from("booking_leads")
+      .insert({
+        full_name: input.fullName,
+        email: input.email,
+        phone: input.phone,
+        hunt: input.hunt,
+        country: geo.country,
+        region: geo.region,
+        city: geo.city,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        source_path: input.sourcePath,
+        status: "lead_captured",
+      });
+
+    if (error) throw error;
+    // RLS keeps SELECT admin-only, so public inserts should not request returned rows.
+    return null;
+  }
 }
 
 export async function fetchBookingLeads(limit = 100): Promise<BookingLeadRow[]> {
   const { data, error } = await supabase
     .from("booking_leads")
     .select(
-      "id,created_at,full_name,email,phone,hunt,source_path,status,payment_provider,payment_ref"
+      "id,created_at,full_name,email,phone,hunt,country,region,city,latitude,longitude,source_path,status,payment_provider,payment_ref"
     )
     .order("created_at", { ascending: false })
     .limit(limit);

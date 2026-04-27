@@ -6,13 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type VisitPayload = {
-  path?: string;
-  page_title?: string | null;
+type LeadPayload = {
+  full_name?: string;
+  email?: string;
+  phone?: string;
+  hunt?: string;
+  source_path?: string | null;
   timezone?: string | null;
   language?: string | null;
   user_agent?: string | null;
-  device_type?: string | null;
   referrer?: string | null;
 };
 
@@ -126,89 +128,35 @@ async function resolveGeoWithIpApi(ip: string) {
   };
 }
 
-async function resolveGeoWithIpApiNoHint() {
-  const response = await fetch("https://ipapi.co/json/", {
-    headers: { accept: "application/json" },
-  });
-  if (!response.ok) throw new Error(`ipapi(no-hint) error ${response.status}`);
-  const data = await response.json();
-  if (!data || data.error) throw new Error("ipapi(no-hint) unavailable");
-  return {
-    country: data.country_name || data.country || null,
-    region: data.region || null,
-    city: data.city || null,
-    latitude: typeof data.latitude === "number" ? data.latitude : null,
-    longitude: typeof data.longitude === "number" ? data.longitude : null,
-  };
-}
-
 async function resolveGeoByIp(req: Request, ip: string | null) {
   const headerGeo = getGeoFromHeaders(req);
-  // Only trust header geo as final when we actually have city/region detail.
-  // Some edges provide only country code in headers, which is not enough.
-  if (headerGeo.region || headerGeo.city) {
+  if (headerGeo.country || headerGeo.region || headerGeo.city) {
     return headerGeo;
   }
 
   if (!isPublicIp(ip)) {
+    return {
+      country: null as string | null,
+      region: null as string | null,
+      city: null as string | null,
+      latitude: null as number | null,
+      longitude: null as number | null,
+    };
+  }
+
+  try {
+    return await resolveGeoWithIpWho(ip as string);
+  } catch {
     try {
-      const geo = await resolveGeoWithIpApiNoHint();
-      return {
-        country: geo.country || headerGeo.country,
-        region: geo.region,
-        city: geo.city,
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-      };
+      return await resolveGeoWithIpApi(ip as string);
     } catch {
       return {
-        country: headerGeo.country || (null as string | null),
+        country: null as string | null,
         region: null as string | null,
         city: null as string | null,
         latitude: null as number | null,
         longitude: null as number | null,
       };
-    }
-  }
-
-  try {
-    const geo = await resolveGeoWithIpWho(ip as string);
-    return {
-      country: geo.country || headerGeo.country,
-      region: geo.region,
-      city: geo.city,
-      latitude: geo.latitude,
-      longitude: geo.longitude,
-    };
-  } catch {
-    try {
-      const geo = await resolveGeoWithIpApi(ip as string);
-      return {
-        country: geo.country || headerGeo.country,
-        region: geo.region,
-        city: geo.city,
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-      };
-    } catch {
-      try {
-        const geo = await resolveGeoWithIpApiNoHint();
-        return {
-          country: geo.country || headerGeo.country,
-          region: geo.region,
-          city: geo.city,
-          latitude: geo.latitude,
-          longitude: geo.longitude,
-        };
-      } catch {
-        return {
-          country: headerGeo.country || (null as string | null),
-          region: null as string | null,
-          city: null as string | null,
-          latitude: null as number | null,
-          longitude: null as number | null,
-        };
-      }
     }
   }
 }
@@ -235,32 +183,43 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const payload = (await req.json()) as LeadPayload;
+    const fullName = payload.full_name?.trim() || "";
+    const email = payload.email?.trim() || "";
+    const phone = payload.phone?.trim() || "";
+    const hunt = payload.hunt?.trim() || "General Deposit";
 
-    const payload = (await req.json()) as VisitPayload;
+    if (!fullName || !email || !phone) {
+      return new Response(JSON.stringify({ error: "Missing lead fields" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const ip = getClientIp(req);
     const geo = await resolveGeoByIp(req, ip);
     const inferredCountry = inferCountryFromLocale(payload.language || null, payload.timezone || null);
     const finalCountry = normalizeCountry(geo.country) || inferredCountry;
 
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
     const insertData = {
-      path: payload.path || "/",
-      page_title: payload.page_title || null,
+      full_name: fullName,
+      email,
+      phone,
+      hunt,
       country: finalCountry,
       region: geo.region,
       city: geo.city,
       latitude: geo.latitude,
       longitude: geo.longitude,
-      timezone: payload.timezone || null,
-      language: payload.language || null,
-      user_agent: payload.user_agent || req.headers.get("user-agent") || null,
-      device_type: payload.device_type || null,
-      referrer: payload.referrer || req.headers.get("referer") || null,
+      source_path: payload.source_path || null,
+      status: "lead_captured",
     };
 
-    const { error } = await supabase.from("analytics_visits").insert(insertData);
+    const { error } = await supabase.from("booking_leads").insert(insertData);
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 400,
@@ -282,3 +241,4 @@ Deno.serve(async (req) => {
     );
   }
 });
+
