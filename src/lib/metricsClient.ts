@@ -181,17 +181,83 @@ export async function trackPageView(pathOverride?: string) {
   }
 }
 
-export async function fetchRecentVisits(limit = 500): Promise<VisitRow[]> {
+export async function fetchRecentVisitsPage(offset = 0, limit = 50): Promise<VisitRow[]> {
   const { data, error } = await supabase
     .from("analytics_visits")
     .select(
       "id,created_at,path,page_title,country,region,city,latitude,longitude,timezone,language,device_type,referrer"
     )
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .range(offset, offset + limit - 1);
 
   if (error) throw error;
   return (data ?? []) as VisitRow[];
+}
+
+export async function fetchVisitsTotalCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from("analytics_visits")
+    .select("id", { count: "exact", head: true });
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function fetchAllVisitTimestamps(): Promise<string[]> {
+  const pageSize = 1000;
+  let offset = 0;
+  const timestamps: string[] = [];
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("analytics_visits")
+      .select("created_at")
+      .order("created_at", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) throw error;
+
+    const page = (data ?? []) as Array<{ created_at: string }>;
+    if (page.length === 0) break;
+
+    timestamps.push(...page.map((row) => row.created_at));
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return timestamps;
+}
+
+export type VisitGeoRow = {
+  latitude: number | null;
+  longitude: number | null;
+  country: string | null;
+  city: string | null;
+};
+
+export async function fetchAllVisitGeoRows(): Promise<VisitGeoRow[]> {
+  const pageSize = 1000;
+  let offset = 0;
+  const rows: VisitGeoRow[] = [];
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("analytics_visits")
+      .select("latitude,longitude,country,city")
+      .order("created_at", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) throw error;
+
+    const page = (data ?? []) as VisitGeoRow[];
+    if (page.length === 0) break;
+
+    rows.push(...page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return rows;
 }
 
 export async function adminSignIn(email: string, password: string) {

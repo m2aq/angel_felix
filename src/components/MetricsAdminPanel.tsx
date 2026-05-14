@@ -6,11 +6,15 @@ import {
   adminSignIn,
   adminSignOut,
   fetchBookingLeads,
-  fetchRecentVisits,
+  fetchAllVisitTimestamps,
+  fetchAllVisitGeoRows,
+  fetchVisitsTotalCount,
+  fetchRecentVisitsPage,
   isAdminSessionActive,
   metricsEnabled,
   type BookingLeadRow,
   type VisitRow,
+  type VisitGeoRow,
 } from "@/lib/metricsClient";
 
 const MAP_BOUNDS: [[number, number], [number, number]] = [
@@ -35,6 +39,12 @@ type GeoHotspot = {
   count: number;
   country: string;
   city: string;
+};
+
+type DailyVisitPoint = {
+  key: string;
+  label: string;
+  count: number;
 };
 
 const createPulseIcon = (count: number) => {
@@ -64,7 +74,12 @@ const MetricsAdminPanel = () => {
   const [rows, setRows] = useState<VisitRow[]>([]);
   const [leads, setLeads] = useState<BookingLeadRow[]>([]);
   const [loadError, setLoadError] = useState("");
-  const [visibleVisitsCount, setVisibleVisitsCount] = useState(VISITS_PAGE_SIZE);
+  const [totalVisitsCount, setTotalVisitsCount] = useState<number>(0);
+  const [allVisitTimestamps, setAllVisitTimestamps] = useState<string[]>([]);
+  const [allVisitGeoRows, setAllVisitGeoRows] = useState<VisitGeoRow[]>([]);
+  const [isLoadingMoreVisits, setIsLoadingMoreVisits] = useState(false);
+  const [visitOffset, setVisitOffset] = useState(0);
+  const [hasMoreVisits, setHasMoreVisits] = useState(true);
 
   useEffect(() => {
     isAdminSessionActive()
@@ -81,10 +96,20 @@ const MetricsAdminPanel = () => {
     try {
       setLoading(true);
       setLoadError("");
-      const [visitsResult, leadsResult] = await Promise.all([fetchRecentVisits(500), fetchBookingLeads(150)]);
+      const [visitsResult, leadsResult, totalCountResult, allTimestampsResult, allGeoRowsResult] = await Promise.all([
+        fetchRecentVisitsPage(0, VISITS_PAGE_SIZE),
+        fetchBookingLeads(150),
+        fetchVisitsTotalCount(),
+        fetchAllVisitTimestamps(),
+        fetchAllVisitGeoRows(),
+      ]);
       setRows(visitsResult);
-      setVisibleVisitsCount(VISITS_PAGE_SIZE);
+      setVisitOffset(visitsResult.length);
+      setHasMoreVisits(visitsResult.length === VISITS_PAGE_SIZE);
       setLeads(leadsResult);
+      setTotalVisitsCount(totalCountResult);
+      setAllVisitTimestamps(allTimestampsResult);
+      setAllVisitGeoRows(allGeoRowsResult);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "Failed to load visits.");
     } finally {
@@ -96,9 +121,24 @@ const MetricsAdminPanel = () => {
     if (isAuthed) loadVisits();
   }, [isAuthed, loadVisits]);
 
+  const loadMoreVisits = useCallback(async () => {
+    if (loading || isLoadingMoreVisits || !hasMoreVisits) return;
+    try {
+      setIsLoadingMoreVisits(true);
+      const nextRows = await fetchRecentVisitsPage(visitOffset, VISITS_PAGE_SIZE);
+      setRows((prev) => [...prev, ...nextRows]);
+      setVisitOffset((prev) => prev + nextRows.length);
+      setHasMoreVisits(nextRows.length === VISITS_PAGE_SIZE);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Failed to load more visits.");
+    } finally {
+      setIsLoadingMoreVisits(false);
+    }
+  }, [hasMoreVisits, isLoadingMoreVisits, loading, visitOffset]);
+
   const summary = useMemo(() => {
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    const total = rows.length;
+    const total = totalVisitsCount;
     const last24h = rows.filter((r) => new Date(r.created_at).getTime() >= oneDayAgo).length;
     const uniqueCountries = new Set(rows.map((r) => r.country || "Unknown")).size;
 
@@ -118,7 +158,7 @@ const MetricsAdminPanel = () => {
     });
 
     return { total, last24h, uniqueCountries, topCountry, topCount };
-  }, [rows]);
+  }, [rows, totalVisitsCount]);
 
   const leadsSummary = useMemo(() => {
     const total = leads.length;
@@ -128,10 +168,38 @@ const MetricsAdminPanel = () => {
     return { total, captured, paid, redirected };
   }, [leads]);
 
+  const dailyVisits = useMemo<DailyVisitPoint[]>(() => {
+    const buckets = new Map<string, number>();
+
+    allVisitTimestamps.forEach((createdAt) => {
+      const date = new Date(createdAt);
+      if (Number.isNaN(date.getTime())) return;
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      const key = `${y}-${m}-${d}`;
+      buckets.set(key, (buckets.get(key) || 0) + 1);
+    });
+
+    return Array.from(buckets.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, count]) => {
+        const [y, m, d] = key.split("-");
+        const date = new Date(Number(y), Number(m) - 1, Number(d));
+        const label = date.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
+        return { key, label, count };
+      });
+  }, [allVisitTimestamps]);
+
+  const dailyMax = useMemo(
+    () => dailyVisits.reduce((max, point) => Math.max(max, point.count), 1),
+    [dailyVisits]
+  );
+
   const radarPoints = useMemo(() => {
     const buckets = new Map<string, GeoHotspot>();
 
-    rows.forEach((row) => {
+    allVisitGeoRows.forEach((row) => {
       if (typeof row.latitude !== "number" || typeof row.longitude !== "number") return;
       if (row.latitude < -90 || row.latitude > 90 || row.longitude < -180 || row.longitude > 180) return;
 
@@ -152,11 +220,12 @@ const MetricsAdminPanel = () => {
     return Array.from(buckets.values())
       .sort((a, b) => b.count - a.count)
       .slice(0, 180);
-  }, [rows]);
+  }, [allVisitGeoRows]);
 
   const totalVisitsWithCoords = useMemo(
-    () => rows.filter((row) => typeof row.latitude === "number" && typeof row.longitude === "number").length,
-    [rows]
+    () =>
+      allVisitGeoRows.filter((row) => typeof row.latitude === "number" && typeof row.longitude === "number").length,
+    [allVisitGeoRows]
   );
 
   const submitLogin = async (e: React.FormEvent) => {
@@ -314,6 +383,41 @@ const MetricsAdminPanel = () => {
           </p>
         ) : null}
 
+        <div className="mb-5 rounded-xl border border-white/10 bg-black/30 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-white/55">Visits Trend</p>
+              <p className="text-sm text-white/70">Daily visits history</p>
+            </div>
+          </div>
+
+          {dailyVisits.length === 0 ? (
+            <p className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white/65">
+              No daily data yet.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="inline-flex w-max min-w-full items-end gap-3 rounded-lg border border-white/10 bg-black/20 p-3">
+                {dailyVisits.map((point) => {
+                  const heightPct = Math.max(8, Math.round((point.count / dailyMax) * 100));
+                  return (
+                    <div key={point.key} className="flex min-w-[46px] flex-1 flex-col items-center gap-2">
+                      <span className="text-[10px] text-cyan-200/80">{point.count}</span>
+                      <div className="flex h-44 w-full items-end rounded bg-white/5 px-1">
+                        <div
+                          className="w-full rounded-t bg-cyan-400/90 shadow-[0_0_10px_rgba(34,211,238,0.45)]"
+                          style={{ height: `${heightPct}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] uppercase tracking-wide text-white/70">{point.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="mb-5 rounded-xl border border-cyan-300/20 bg-gradient-to-br from-slate-950 to-slate-900 p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -386,7 +490,7 @@ const MetricsAdminPanel = () => {
                   </td>
                 </tr>
               ) : (
-                rows.slice(0, visibleVisitsCount).map((row) => (
+                rows.map((row) => (
                   <tr key={row.id} className="border-t border-white/10">
                     <td className="px-3 py-3 text-white/80">{fmtDate(row.created_at)}</td>
                     <td className="px-3 py-3 text-white/90">{row.path}</td>
@@ -401,13 +505,14 @@ const MetricsAdminPanel = () => {
             </tbody>
           </table>
         </div>
-        {!loading && rows.length > visibleVisitsCount ? (
+        {!loading && hasMoreVisits ? (
           <div className="mt-3 flex justify-center">
             <button
-              onClick={() => setVisibleVisitsCount((prev) => prev + VISITS_PAGE_SIZE)}
+              onClick={loadMoreVisits}
+              disabled={isLoadingMoreVisits}
               className="rounded-lg border border-white/20 px-4 py-2 text-xs uppercase tracking-widest text-white/80"
             >
-              Load More (+50)
+              {isLoadingMoreVisits ? "Loading..." : "Load More (+50)"}
             </button>
           </div>
         ) : null}
