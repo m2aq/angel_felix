@@ -6,6 +6,28 @@ const RUT_VIDEO_2 = `${import.meta.env.BASE_URL}custom/video2.mp4`;
 const RUT_POSTER_1 = `${import.meta.env.BASE_URL}custom/video1-poster.webp`;
 const RUT_POSTER_2 = `${import.meta.env.BASE_URL}custom/video2-poster.webp`;
 
+const VIDEO_CONTROLS_HEIGHT_PX = 56;
+
+const handleVideoPointerDown = (e: React.PointerEvent<HTMLVideoElement>) => {
+  e.currentTarget.dataset.wasPaused = String(e.currentTarget.paused);
+  e.currentTarget.dataset.pointerType = e.pointerType;
+};
+
+// Desktop (mouse) only: click anywhere on the video toggles play/pause, except over
+// the controls bar. Touch devices (iPhone, Android) keep the native behavior.
+const handleVideoClick = (e: React.MouseEvent<HTMLVideoElement>) => {
+  const video = e.currentTarget;
+  if (video.dataset.pointerType !== "mouse") return;
+  if (e.clientY > video.getBoundingClientRect().bottom - VIDEO_CONTROLS_HEIGHT_PX) return;
+  const wasPaused = video.dataset.wasPaused === "true";
+  // Some browsers already toggle on click; only act if the state did not change.
+  window.setTimeout(() => {
+    if (video.paused !== wasPaused) return;
+    if (video.paused) void video.play().catch(() => {});
+    else video.pause();
+  }, 0);
+};
+
 const AboutSection = () => {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -65,6 +87,8 @@ const AboutSection = () => {
                 playsInline
                 preload="none"
                 poster={RUT_POSTER_1}
+                onPointerDown={handleVideoPointerDown}
+                onClick={handleVideoClick}
               >
                 <source src={RUT_VIDEO_1} type="video/mp4" />
               </video>
@@ -75,6 +99,8 @@ const AboutSection = () => {
                 playsInline
                 preload="none"
                 poster={RUT_POSTER_2}
+                onPointerDown={handleVideoPointerDown}
+                onClick={handleVideoClick}
               >
                 <source src={RUT_VIDEO_2} type="video/mp4" />
               </video>
