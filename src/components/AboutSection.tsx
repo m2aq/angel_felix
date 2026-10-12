@@ -1,12 +1,13 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 const RUT_VIDEO_1 = `${import.meta.env.BASE_URL}custom/video1.mp4`;
 const RUT_VIDEO_2 = `${import.meta.env.BASE_URL}custom/video2.mp4`;
+const RUT_POSTER_1 = `${import.meta.env.BASE_URL}custom/video1-poster.webp`;
+const RUT_POSTER_2 = `${import.meta.env.BASE_URL}custom/video2-poster.webp`;
 
 const AboutSection = () => {
   const ref = useRef<HTMLDivElement>(null);
-  const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
@@ -15,30 +16,6 @@ const AboutSection = () => {
   const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
   const y = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], ["60px", "0px", "0px", "-40px"]);
   const scale = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0.95, 1, 1, 0.98]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target as HTMLVideoElement;
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-            void video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-        });
-      },
-      { threshold: [0.35, 0.6, 0.85] }
-    );
-
-    videoRefs.current.forEach((video) => {
-      if (video) observer.observe(video);
-    });
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
 
   return (
     <section 
@@ -82,26 +59,22 @@ const AboutSection = () => {
             </h3>
             <div className="space-y-6">
               <video
-                ref={(element) => {
-                  videoRefs.current[0] = element;
-                }}
                 className="w-full overflow-hidden rounded-lg border border-white/10 bg-black/30 shadow-2xl"
                 controls
                 muted
                 playsInline
-                preload="metadata"
+                preload="none"
+                poster={RUT_POSTER_1}
               >
                 <source src={RUT_VIDEO_1} type="video/mp4" />
               </video>
               <video
-                ref={(element) => {
-                  videoRefs.current[1] = element;
-                }}
                 className="w-full overflow-hidden rounded-lg border border-white/10 bg-black/30 shadow-2xl"
                 controls
                 muted
                 playsInline
-                preload="metadata"
+                preload="none"
+                poster={RUT_POSTER_2}
               >
                 <source src={RUT_VIDEO_2} type="video/mp4" />
               </video>
