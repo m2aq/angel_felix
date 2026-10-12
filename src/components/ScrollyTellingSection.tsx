@@ -3,7 +3,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
-const SCROLLY_MULE_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/scrolly-mule-deer.jpg`;
+const SCROLLY_MULE_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/scrolly-mule-deer.webp`;
 const IMAGE_OBJECT_POSITION = "50% 50%";
 const IMAGE_ZOOM_ORIGIN = "50% 85%";
 

@@ -1,9 +1,9 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 
-const BIGHORN_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-bighorn.jpg`;
+const BIGHORN_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-bighorn.webp`;
 const MULE_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-mule-deer.jpg`;
-const COUES_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-coues-deer.jpg`;
+const COUES_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-coues-deer.webp`;
 const ISLA_TIBURON_IMAGE = `${import.meta.env.BASE_URL}custom/isla-tiburon.jpeg`;
 
 type HuntItemData = {
