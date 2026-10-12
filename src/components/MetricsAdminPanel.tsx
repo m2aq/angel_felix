@@ -139,11 +139,11 @@ const MetricsAdminPanel = () => {
   const summary = useMemo(() => {
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
     const total = totalVisitsCount;
-    const last24h = rows.filter((r) => new Date(r.created_at).getTime() >= oneDayAgo).length;
-    const uniqueCountries = new Set(rows.map((r) => r.country || "Unknown")).size;
+    const last24h = allVisitTimestamps.filter((t) => new Date(t).getTime() >= oneDayAgo).length;
+    const uniqueCountries = new Set(allVisitGeoRows.map((r) => r.country || "Unknown")).size;
 
     const countryCount = new Map<string, number>();
-    rows.forEach((r) => {
+    allVisitGeoRows.forEach((r) => {
       const country = r.country || "Unknown";
       countryCount.set(country, (countryCount.get(country) || 0) + 1);
     });
@@ -158,7 +158,7 @@ const MetricsAdminPanel = () => {
     });
 
     return { total, last24h, uniqueCountries, topCountry, topCount };
-  }, [rows, totalVisitsCount]);
+  }, [allVisitTimestamps, allVisitGeoRows, totalVisitsCount]);
 
   const leadsSummary = useMemo(() => {
     const total = leads.length;
