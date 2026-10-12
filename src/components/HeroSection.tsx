@@ -33,7 +33,7 @@ const HeroSection = ({ onBookNow }: HeroSectionProps) => {
   return (
     <section ref={ref} className="relative h-[200vh] bg-black">
       
-      <div className="sticky top-0 h-[100dvh] w-full overflow-hidden flex items-center justify-center">
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
         
         {/* GLOBAL BACKGROUND */}
         <motion.div
@@ -58,15 +58,21 @@ const HeroSection = ({ onBookNow }: HeroSectionProps) => {
           style={{ scale: logoScale, opacity: logoOpacity, y: logoY }}
         >
           {/* Intense Radial Glow behind the logo - Layer 1 (Large & Soft) */}
-          <div className="absolute h-[30rem] w-[30rem] rounded-full bg-white/30 blur-[120px]" />
-          
+          <div
+            className="absolute h-[45rem] w-[45rem] rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0) 70%)" }}
+          />
+
           {/* Core Glow - Layer 2 (Smaller & Brighter) */}
-          <div className="absolute h-64 w-64 rounded-full bg-white/40 blur-[60px]" />
-          
+          <div
+            className="absolute h-96 w-96 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.40) 0%, rgba(255,255,255,0) 70%)" }}
+          />
+
           <img
             src={logo}
             alt="Angel Felix Outfitter"
-            className="w-72 md:w-[32rem] drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] drop-shadow-[0_0_45px_rgba(255,255,255,0.5)] drop-shadow-[0_0_100px_rgba(255,255,255,0.3)]" 
+            className="w-72 md:w-[32rem]"
           />
         </motion.div>
 
