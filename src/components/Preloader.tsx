@@ -29,9 +29,9 @@ const Preloader = () => {
           setIsLoading(false);
           setTimeout(() => {
             document.body.style.overflow = "auto";
-          }, 1100);
-        }, 350);
-      }, 1500);
+          }, 500);
+        }, 250);
+      }, 400);
     };
 
     if (document.readyState === "complete") {
@@ -52,7 +52,7 @@ const Preloader = () => {
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.02, filter: "blur(6px)" }}
-          transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
         >
           <div className="flex flex-col items-center">
