@@ -1,28 +1,64 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/logo-angel-felix.webp";
+import heroBg from "@/assets/hero-cimarron.jpg";
+import {
+  BIGHORN_IMAGE,
+  COUES_DEER_IMAGE,
+  ISLA_TIBURON_IMAGE,
+  MULE_DEER_IMAGE,
+  SCROLLY_MULE_DEER_IMAGE,
+} from "@/lib/pageAssets";
+
+// Everything the main page needs to look complete when the loader leaves.
+// Videos and the gallery are not included: they load on demand / on scroll.
+const PAGE_IMAGES = [
+  heroBg,
+  SCROLLY_MULE_DEER_IMAGE,
+  BIGHORN_IMAGE,
+  MULE_DEER_IMAGE,
+  COUES_DEER_IMAGE,
+  ISLA_TIBURON_IMAGE,
+];
+const FONT_FACES = ['400 1em "Cormorant Garamond"', '400 1em "Montserrat"'];
+// Safety cap so the loader never hangs on a failed or very slow request.
+const MAX_WAIT_MS = 20000;
+
+const loadImage = (url: string) =>
+  new Promise<void>((resolve) => {
+    const img = new Image();
+    img.src = url;
+    // decode() waits for the bitmap to be ready, so Safari on iPhone does not paint it in tiles.
+    if (typeof img.decode === "function") {
+      img.decode().then(() => resolve(), () => resolve());
+    } else {
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+    }
+  });
+
+const loadFonts = () =>
+  Promise.all([...FONT_FACES.map((face) => document.fonts.load(face)), document.fonts.ready]).then(
+    () => undefined,
+    () => undefined
+  );
+
+const waitForWindowLoad = () =>
+  document.readyState === "complete"
+    ? Promise.resolve()
+    : new Promise<void>((resolve) => window.addEventListener("load", () => resolve(), { once: true }));
 
 const Preloader = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (!isLoading) return;
-
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 92) return prev;
-        return Math.min(92, prev + (Math.random() * 6 + 2));
-      });
-    }, 120);
-
-    return () => clearInterval(timer);
-  }, [isLoading]);
-
-  useEffect(() => {
     document.body.style.overflow = "hidden";
 
-    const handleLoad = () => {
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
       setTimeout(() => {
         setProgress(100);
         setTimeout(() => {
@@ -34,16 +70,19 @@ const Preloader = () => {
       }, 400);
     };
 
-    if (document.readyState === "complete") {
-      handleLoad();
-    } else {
-      window.addEventListener("load", handleLoad);
-      const timeout = setTimeout(handleLoad, 5000);
-      return () => {
-        window.removeEventListener("load", handleLoad);
-        clearTimeout(timeout);
-      };
-    }
+    // Real progress: one step per asset that finished loading.
+    const tasks = [waitForWindowLoad(), loadFonts(), ...PAGE_IMAGES.map(loadImage)];
+    let done = 0;
+    tasks.forEach((task) =>
+      task.then(() => {
+        done += 1;
+        if (!finished) setProgress(Math.min(99, Math.round((done / tasks.length) * 100)));
+      })
+    );
+
+    Promise.all(tasks).then(finish);
+    const timeout = setTimeout(finish, MAX_WAIT_MS);
+    return () => clearTimeout(timeout);
   }, []);
 
   return (

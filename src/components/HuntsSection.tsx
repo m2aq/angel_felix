@@ -1,10 +1,12 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 
-const BIGHORN_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-bighorn.webp`;
-const MULE_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-mule-deer.jpg`;
-const COUES_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-coues-deer.webp`;
-const ISLA_TIBURON_IMAGE = `${import.meta.env.BASE_URL}custom/isla-tiburon.jpeg`;
+import {
+  BIGHORN_IMAGE,
+  COUES_DEER_IMAGE,
+  ISLA_TIBURON_IMAGE,
+  MULE_DEER_IMAGE,
+} from "@/lib/pageAssets";
 
 type HuntItemData = {
   title: string;
@@ -90,6 +92,7 @@ const HuntItem = ({ hunt, index, onBookNow }: { hunt: HuntItemData; index: numbe
           <img
             src={hunt.image}
             alt={hunt.title}
+            decoding="async"
             className={`h-full w-full transition-transform duration-700 ${
               isMuleDeer ? "h-auto object-contain" : "object-cover hover:scale-110"
             }`}

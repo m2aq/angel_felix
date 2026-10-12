@@ -3,7 +3,8 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
-const SCROLLY_MULE_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/scrolly-mule-deer.webp`;
+import { SCROLLY_MULE_DEER_IMAGE } from "@/lib/pageAssets";
+
 const IMAGE_OBJECT_POSITION = "50% 50%";
 const IMAGE_ZOOM_ORIGIN = "50% 85%";
 
@@ -97,6 +98,7 @@ const ScrollyTellingSection = () => {
           ref={imageRef}
           src={SCROLLY_MULE_DEER_IMAGE}
           alt="Mule Deer"
+          decoding="async"
           className="absolute h-full w-full object-cover opacity-80"
           style={{
             willChange: "transform",
