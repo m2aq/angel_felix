@@ -1,16 +1,17 @@
 import Preloader from "@/components/Preloader";
-import MetricsAdminPanel from "@/components/MetricsAdminPanel";
 import SocialDock from "@/components/SocialDock";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { Suspense, lazy, useEffect, useRef } from "react";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Gallery from "./pages/Gallery";
 import NotFound from "./pages/NotFound";
 import { useNavigate } from "react-router-dom";
+
+const MetricsAdminPanel = lazy(() => import("@/components/MetricsAdminPanel"));
 
 const queryClient = new QueryClient();
 const SECRET_CLICKS_REQUIRED = 5;
@@ -56,7 +57,14 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/gallery" element={<Gallery />} />
-          <Route path="/admin" element={<MetricsAdminPanel />} />
+          <Route
+            path="/admin"
+            element={
+              <Suspense fallback={null}>
+                <MetricsAdminPanel />
+              </Suspense>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
